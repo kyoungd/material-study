@@ -1,9 +1,12 @@
+# https://github.com/CanerIrfanoglu/medium
+
+import talib
 import pandas as pd
 import numpy as np
 from datetime import date
 
 
-class SupportResistanceLines:
+class TechnicalAnalysis:
 
     @staticmethod
     def _getSupport(df, i):
@@ -21,11 +24,12 @@ class SupportResistanceLines:
 
         return resistancePrice
 
-    def get_support_resistance_lines(self, df):
+    @staticmethod
+    def KeyLevels(df):
         allPrices = []
         for i in range(2, df.shape[0] - 2):
-            supportPrice = SupportResistanceLines._getSupport(df, i)
-            resistantPrice = SupportResistanceLines._getResistance(df, i)
+            supportPrice = TechnicalAnalysis._getSupport(df, i)
+            resistantPrice = TechnicalAnalysis._getResistance(df, i)
             if supportPrice != 0:
                 allPrices.append((i, supportPrice))
             elif resistantPrice != 0:
@@ -42,8 +46,8 @@ class SupportResistanceLines:
         allPrices = []
 
         for i in range(2, df.shape[0] - 2):
-            supportPrice = SupportResistanceLines._getSupport(df, i)
-            resistantPrice = SupportResistanceLines._getResistance(df, i)
+            supportPrice = TechnicalAnalysis._getSupport(df, i)
+            resistantPrice = TechnicalAnalysis._getResistance(df, i)
             if supportPrice != 0:
                 if np.sum([abs(supportPrice-x) < mean for x in allPrices]) == 0:
                     allPrices.append((i, supportPrice))
@@ -56,7 +60,8 @@ class SupportResistanceLines:
             sr_lines.append((item[0], df.iloc[item[0]].name, item[1]))
         return sr_lines
 
-    def get_overnight_gapper(df, minPrice=0.20, percentGapper=0.05):
+    @staticmethod
+    def Gappers(df, minPrice=0.20, percentGapper=0.05):
         on_gappers = []
         for i in range(0, df.shape[0]-2):
             overnightGapper = 0
@@ -68,7 +73,8 @@ class SupportResistanceLines:
 
         return on_gappers
 
-    def calculate_ema(df, days, smoothing=2):
+    @staticmethod
+    def Ema(df, days, smoothing=2):
         prices = df['close']
         ema = [sum(prices[:days]) / days]
         for price in prices[days:]:
@@ -77,7 +83,23 @@ class SupportResistanceLines:
         return ema
 
     # Create VWAP function
-    def calculate_vwap(df):
+    @staticmethod
+    def Vwap(df):
         v = df['volume'].values
         tp = (df['low'] + df['close'] + df['high']).div(3).values
         return df.assign(vwap=(tp * v).cumsum() / v.cumsum())
+
+    @staticmethod
+    def CandleStickPattern(data):
+        morning_star = talib.CDLMORNINGSTAR(
+            data['Open'], data['High'], data['Low'], data['Close'])
+
+        engulfing = talib.CDLENGULFING(
+            data['Open'], data['High'], data['Low'], data['Close'])
+
+        data['Morning Star'] = morning_star
+        data['Engulfing'] = engulfing
+
+        engulfing_days = data[data['Engulfing'] != 0]
+
+        print(engulfing_days)

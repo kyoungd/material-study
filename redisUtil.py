@@ -200,6 +200,8 @@ class KeyName:
     KEY_THREEBARSTACK_UNSUBSCRIBE = "STUDYTHREEBARSTACK_UNSUBSCRIBE"
     KEY_THREEBARSCORE = "STUDYTHREEBARSCORE"
 
+    STUDY_KEY_LEVELS = "STUDY_KEY_LEVELS"
+
     # Time Series Key for each symbol, data type and timeframe
 
     @staticmethod

@@ -53,7 +53,7 @@ redis-cli
 
 ## REDIS-TIMESERIES local version
 
-$ flus
+$ redis-server --loadmodule /home/young/Desktop/code/RedisTimeSeries/bin/redistimeseries.so
 
 ## Running GRAFANA in a DOCKER Container
 
