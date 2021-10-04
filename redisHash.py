@@ -48,9 +48,12 @@ class RedisHash:
         return self.redis.hexists(self.key, symbol)
 
 
-class ThreeBarPlayStack(RedisHash):
-    def __init__(self, r=None, unsubCallback=None):
-        self.key = KeyName.KEY_THREEBARSTACK
+class StoreStack(RedisHash):
+    def __init__(self, r=None, unsubCallback=None, key=None):
+        if key is None:
+            key = KeyName.THREE_BAR_PLAY_STACK
+        else:
+            self.key = key
         self.subscribes = {}
         self.unsubscribes = {}
         self.unsubCallback = unsubCallback
@@ -103,9 +106,9 @@ class ThreeBarPlayStack(RedisHash):
         print(oneDict)
 
 
-class ThreeBarKeepScore (RedisHash):
-    def __init__(self, symbol, r=None):
-        self.key = KeyName.KEY_THREEBARSCORE
+class StoreScore (RedisHash):
+    def __init__(self, symbol, r=None, key=None):
+        self.key = KeyName.KEY_THREEBARSCORE if (key is None) else key
         RedisHash.__init__(self, self.key, r)
         self.score: StudyScores = StudyScores(self.key, symbol)
 
@@ -120,14 +123,14 @@ class ThreeBarKeepScore (RedisHash):
 
 
 if __name__ == "__main__":
-    app = ThreeBarKeepScore('test')
+    app = StoreScore('test')
     app.score.Score = 50
     print(app.score)
     app.save()
-    bpp = ThreeBarKeepScore('test')
+    bpp = StoreScore('test')
     bpp.load()
     print(bpp.score)
-    # app = ThreeBarPlayStack()
+    # app = StoreStack()
     # app.add("AAPL", {'name': 'test', 'data': 'this is text'})
     # myDict = app.redis.hvals('STUDYTHREEBARSTACK')
     # newDict = []

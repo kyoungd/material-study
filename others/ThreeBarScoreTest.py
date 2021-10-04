@@ -1,7 +1,7 @@
 import logging
 import json
 from redisUtil import RedisTimeFrame, SetInterval
-from redisHash import ThreeBarPlayStack
+from redisHash import StoreStack
 from redis3barScore import StudyThreeBarsScore
 from ThreeBarCandidates import StudyThreeBarsFilter
 import asyncio
@@ -35,7 +35,7 @@ def init():
     global process
     process = StudyThreeBarsScore()
     global stack
-    stack = ThreeBarPlayStack()
+    stack = StoreStack()
     stock = StudyThreeBarsFilter.barCandidate(
         symbol, lowPrice+0.50, lowPrice + 1, lowPrice, RedisTimeFrame.MIN2)
     stack.addSymbol(symbol, stock)

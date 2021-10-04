@@ -35,8 +35,8 @@ Once you have the Redis TimeSeries container up and running you can connect to t
 Before running these scripts, ensure that you modify host and port number(6379) for Redis as per your infrastructure setup.
 
 ```
- % python3 redisTSCreateKeysSample.py
- % python3 redisTimeSeriesQuerySamples.py
+ % python3 ThreeBarCandidates.py
+ % python3 ThreeBarScore.py
 ```
 
 ## TS.QUERYINDEX - working command
@@ -92,8 +92,27 @@ TSDB-TYPE
 
 ## References
 
-- [Build Your Financial Application on RedisTimeSeries](https://redislabs.com/blog/build-your-financial-application-on-redistimeseries/)
-- [Why the Financial Industry Needs Redis Enterprise](https://redislabs.com/blog/why-the-financial-industry-needs-redis-enterprise/)
+1.  study score
+2.  candle stick pattern
+3.  price-action
+4.  multiframe analysis
+5.  fibonacci
+    https://www.youtube.com/watch?v=xU9j_MkRYfg
+    Calculate and plot fibonacci retracement levels for an upward trending using python
+6.  divergence
+    https://raposa.trade/trade-rsi-divergence-python/
+    RSI Divegence in Python
+7.  breakout
+8.  trend - with
+9.  fresh trend
+10. key levels
+11. vwap
+12. ema50
+13. news
+14. total
+15. volume
+16. volitility
+17. standard deviation
 
 ## alpaca returns
 

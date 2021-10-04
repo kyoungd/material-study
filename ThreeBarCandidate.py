@@ -1,6 +1,6 @@
 from redisUtil import RedisTimeFrame, KeyName, SetInterval
 from redisTSBars import RealTimeBars
-from redisHash import ThreeBarPlayStack
+from redisHash import StoreStack
 from datetime import datetime
 import time
 import sys
@@ -53,9 +53,9 @@ class StudyThreeBarsFilter:
 
 class StudyThreeBarsCandidates:
 
-    def __init__(self, stack: ThreeBarPlayStack = None):
+    def __init__(self, stack: StoreStack = None):
         if (stack == None):
-            self.stack = ThreeBarPlayStack()
+            self.stack = StoreStack()
         else:
             self.stack = stack
         self.rtb: RealTimeBars = RealTimeBars()

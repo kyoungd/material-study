@@ -1,6 +1,7 @@
 # https://github.com/CanerIrfanoglu/medium
 
 import talib
+from talib import abstract
 import pandas as pd
 import numpy as np
 from datetime import date
@@ -9,23 +10,21 @@ from datetime import date
 class TechnicalAnalysis:
 
     @staticmethod
-    def _getSupport(df, i):
+    def _getSupport(df: pd.DataFrame, i: int):
         supportPrice = 0
-        if df['Low'][i] < df['Low'][i-1] and df['Low'][i] < df['Low'][i+1] and df['Low'][i+1] < df['Low'][i+2] and df['Low'][i-1] < df['Low'][i-2]:
-            supportPrice = df['Low'][i]
-
+        if df['low'][i] < df['low'][i-1] and df['low'][i] < df['low'][i+1] and df['low'][i+1] < df['low'][i+2] and df['low'][i-1] < df['low'][i-2]:
+            supportPrice = df['low'][i]
         return supportPrice
 
     @staticmethod
-    def _getResistance(df, i):
+    def _getResistance(df: pd.DataFrame, i: int):
         resistancePrice = 0
-        if df['High'][i] > df['High'][i-1] and df['High'][i] > df['High'][i+1] and df['High'][i+1] > df['High'][i+2] and df['High'][i-1] > df['High'][i-2]:
-            resistancePrice = df['High'][i]
-
+        if df['high'][i] > df['high'][i-1] and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]:
+            resistancePrice = df['high'][i]
         return resistancePrice
 
     @staticmethod
-    def KeyLevels(df):
+    def KeyLevels(df: pd.DataFrame):
         allPrices = []
         for i in range(2, df.shape[0] - 2):
             supportPrice = TechnicalAnalysis._getSupport(df, i)
@@ -37,11 +36,11 @@ class TechnicalAnalysis:
 
         # df['Date'] = pd.to_datetime(df.index)
         # df['Date'] = df['Date'].apply(mpl_dates.date2num)
-        # df = df.loc[:, ['Date', 'Open', 'High', 'Low', 'Close']]
+        # df = df.loc[:, ['Date', 'open', 'high', 'low', 'close']]
 
         # get rid of prices near to one another reduce noise
 
-        mean = np.mean(df['High'] - df['Low'])  # rough estimate of volatility
+        mean = np.mean(df['high'] - df['low'])  # rough estimate of volatility
 
         allPrices = []
 
@@ -54,52 +53,74 @@ class TechnicalAnalysis:
             elif resistantPrice != 0:
                 if np.sum([abs(resistantPrice-x) < mean for x in allPrices]) == 0:
                     allPrices.append((i, resistantPrice))
-
         sr_lines = []
         for item in allPrices:
-            sr_lines.append((item[0], df.iloc[item[0]].name, item[1]))
+            tstamp = df.iloc[item[0]].name
+            stamp = str(tstamp)
+            sr_lines.append((item[0], stamp, item[1]))
         return sr_lines
 
+    # convert timestamp to datetime string
+
     @staticmethod
-    def Gappers(df, minPrice=0.20, percentGapper=0.05):
+    def OvernightGappers(df: pd.DataFrame, params: dict = None):
+        minPrice = 0.20
+        percentGapper = 0.05
+        if 'minprice' in params:
+            minPrice = params['minprice']   # minimum price gap
+        if 'percentgapper' in params:
+            percentGapper = params['percentgapper']
         on_gappers = []
         for i in range(0, df.shape[0]-2):
             overnightGapper = 0
-            gap = df.iloc[i].Close - df.iloc[i+1].Open
-            calcPercent = abs(gap / df.iloc[i].Close)
+            gap = df.iloc[i].close - df.iloc[i+1].open
+            calcPercent = abs(gap / df.iloc[i].close)
             if calcPercent >= percentGapper and abs(gap) >= minPrice:
-                on_gappers.append((i, df.iloc[i].Close, df.iloc[i].name))
-                on_gappers.append((i, df.iloc[i+1].Open, df.iloc[i+1].name))
-
+                on_gappers.append((i, df.iloc[i].close, df.iloc[i].name))
+                on_gappers.append((i, df.iloc[i+1].open, df.iloc[i+1].name))
         return on_gappers
 
+    # talib expoential moving average
+
     @staticmethod
-    def Ema(df, days, smoothing=2):
-        prices = df['close']
-        ema = [sum(prices[:days]) / days]
-        for price in prices[days:]:
-            ema.append((price * (smoothing / (1 + days))) +
-                       ema[-1] * (1 - (smoothing / (1 + days))))
-        return ema
+    def Ema(df: pd.DataFrame, params: dict = None):
+        days = 30 if 'days' not in params else params['days']
+        ema = abstract.EMA(df, timeperiod=days)
+        return ema.to_json()
+        # ema = talib.exponential_moving_average(df['close'], timeperiod=days,
+        #                                        nbdev=smoothing)
+        # return ema
 
     # Create VWAP function
     @staticmethod
-    def Vwap(df):
+    def Vwap(df: pd.DataFrame, params: dict = None):
         v = df['volume'].values
         tp = (df['low'] + df['close'] + df['high']).div(3).values
         return df.assign(vwap=(tp * v).cumsum() / v.cumsum())
 
     @staticmethod
-    def CandleStickPattern(data):
-        morning_star = talib.CDLMORNINGSTAR(
-            data['Open'], data['High'], data['Low'], data['Close'])
+    def CandleStickPattern(df: pd.DataFrame, params: dict = None):
+        patterns = params['patterns'].split(
+            ',') if 'patterns' in params else []
+        for pattern in patterns:
+            pattern_function = getattr(talib, pattern)
+            results = []
+            try:
+                result = pattern_function(
+                    df['Open'], df['High'], df['Low'], df['Close'])
+                last = result.tail(1).values[0]
+                if last > 0:
+                    results.append(pattern, 'bullish')
+                elif last < 0:
+                    results.append(pattern, 'bearish')
+                # else:
+                #     stocks[symbol][pattern] = None
+            except:
+                pass
+        return pattern
 
-        engulfing = talib.CDLENGULFING(
-            data['Open'], data['High'], data['Low'], data['Close'])
-
-        data['Morning Star'] = morning_star
-        data['Engulfing'] = engulfing
-
-        engulfing_days = data[data['Engulfing'] != 0]
-
-        print(engulfing_days)
+    @staticmethod
+    def PriceMomentum(df: pd.DataFrame, params: dict = None):
+        periods = params['periods'] if 'periods' in params else 5
+        output = abstract.MOM(df['close'], timeperiod=periods)
+        return output

@@ -1,15 +1,12 @@
-from redisUtil import AlpacaAccess, RedisTimeFrame
+from redisUtil import RedisTimeFrame
 from redisTSBars import RealTimeBars
-from redisHash import ThreeBarPlayStack, ThreeBarKeepScore, RedisHash
-from redis3barUtil import StudyThreeBarsUtil
-from redisUtil import RedisTimeFrame, KeyName, AlpacaAccess
-from redisSortedSet import ThreeBarPlayScore
-import json
+from redisHash import StoreStack, StoreScore
+from redisUtil import RedisTimeFrame
 
 
 class StudyThreeBarsScore:
     def __init__(self):
-        self.stack = ThreeBarPlayStack()
+        self.stack = StoreStack()
         self.rtb = RealTimeBars()
 
     def _isPriceRangeOptimal(self, newPrice, price1, price2):
@@ -36,7 +33,7 @@ class StudyThreeBarsScore:
     def _process(self, package, getRealTimeData, getStackData):
         data = package
         symbol = data['symbol']
-        study = ThreeBarKeepScore(symbol)
+        study = StoreScore(symbol)
         newPrice = data['close']
         realtime = getRealTimeData(
             None, symbol, RedisTimeFrame.REALTIME)
