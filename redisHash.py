@@ -23,6 +23,13 @@ class RedisHash:
     def getAll(self):
         return self._getAll(self.key)
 
+    def getAllSymbols(self):
+        arrayOfByteArray = self.redis.hkeys(self.key)
+        result = []
+        for item in arrayOfByteArray:
+            result.append(item.decode('utf-8'))
+        return result
+
     def _add(self, key, symbol, jsondata):
         data = json.dumps(jsondata)
         self.redis.hset(key, symbol, data)
@@ -51,13 +58,11 @@ class RedisHash:
 class StoreStack(RedisHash):
     def __init__(self, r=None, unsubCallback=None, key=None):
         if key is None:
-            key = KeyName.THREE_BAR_PLAY_STACK
-        else:
-            self.key = key
+            key = KeyName.KEY_THREEBARSTACK
         self.subscribes = {}
         self.unsubscribes = {}
         self.unsubCallback = unsubCallback
-        RedisHash.__init__(self, self.key, r)
+        super().__init__(key, r)
         self.publisher = RedisPublisher(
             channels=KeyName.EVENT_NEW_CANDIDATES, r=self.redis)
 
@@ -108,8 +113,9 @@ class StoreStack(RedisHash):
 
 class StoreScore (RedisHash):
     def __init__(self, symbol, r=None, key=None):
-        self.key = KeyName.KEY_THREEBARSCORE if (key is None) else key
-        RedisHash.__init__(self, self.key, r)
+        if key is None:
+            key = KeyName.KEY_THREEBARSCORE
+        super().__init__(self, key, r)
         self.score: StudyScores = StudyScores(self.key, symbol)
 
     def save(self):
@@ -122,14 +128,47 @@ class StoreScore (RedisHash):
         self.score.deserialize_from_string(data)
 
 
+class ActiveBars (RedisHash):
+
+    def __init__(self, r=None):
+        super().__init__(key=KeyName.VARIABLE_ACTIVE_BARS, r=r)
+
+    def addSymbol(self, symbol):
+        if (not self.isSymbolExist(symbol)):
+            self.add(symbol, [])
+
+    def deleteSymbol(self, symbol):
+        if (self.isSymbolExist(symbol)):
+            self.delete(symbol)
+
+    def deleteAll(self, allsymbols):
+        for symbol in allsymbols:
+            if (self.isSymbolExist(symbol)):
+                self.delete(symbol)
+
+
 if __name__ == "__main__":
-    app = StoreScore('test')
-    app.score.Score = 50
-    print(app.score)
-    app.save()
-    bpp = StoreScore('test')
-    bpp.load()
-    print(bpp.score)
+    app = ActiveBars()
+    app.addSymbol('AAPL')
+    app.addSymbol('GOOG')
+    app.addSymbol('MSFT')
+    app.addSymbol('FB')
+    app.addSymbol('AMZN')
+    symbols = app.getAllSymbols()
+    print(symbols)
+    app.deleteAll(symbols)
+    symbols = app.getAllSymbols()
+    print(symbols)
+
+    # app = StoreScore('test')
+    # app.score.Score = 50
+    # print(app.score)
+    # app.save()
+    # bpp = StoreScore('test')
+    # bpp.load()
+    # print(bpp.score)
+    #
+    #
     # app = StoreStack()
     # app.add("AAPL", {'name': 'test', 'data': 'this is text'})
     # myDict = app.redis.hvals('STUDYTHREEBARSTACK')

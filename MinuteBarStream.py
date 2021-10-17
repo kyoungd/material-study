@@ -4,9 +4,13 @@ import sys
 from redisUtil import AlpacaStreamAccess
 from redisPubsub import StreamBarsPublisher, StreamBarsSubscriber
 from redisTSCreateTable import CreateRedisStockTimeSeriesKeys
-
+from redisTSBars import RealTimeBars
+from datetime import datetime
+import time
 import alpaca_trade_api as alpaca
 from alpaca_trade_api.stream import Stream
+from redisHash import ActiveBars
+
 # from alpaca_trade_api.common import URL
 # from redistimeseries.client import Client
 # from alpaca_trade_api.rest import REST
@@ -18,6 +22,8 @@ class MinuteBarStream:
     subscriber: StreamBarsSubscriber = None
     publisher: StreamBarsPublisher = None
     stream: Stream = None
+    rtb: RealTimeBars = None
+    ab: ActiveBars = None
 
     @staticmethod
     def init(conn: Stream = None):
@@ -31,6 +37,10 @@ class MinuteBarStream:
             MinuteBarStream.stream = AlpacaStreamAccess.connection()
         else:
             MinuteBarStream.stream = conn
+        if (MinuteBarStream.rtb == None):
+            MinuteBarStream.rtb = RealTimeBars()
+        if MinuteBarStream.ab == None:
+            MinuteBarStream.ab = ActiveBars()
 
 # you could leave out the status to also get the inactive ones
 # https://forum.alpaca.markets/t/how-do-i-get-all-stocks-name-from-the-market-into-a-python-list/2070/2
@@ -50,8 +60,14 @@ class MinuteBarStream:
     @staticmethod
     async def handleBar(bar):
         # print('bar: ', bar)
-        bar['t'] = 0
-        MinuteBarStream.publisher.publish(bar)
+        # bar['t'] = 0
+
+        # direct push to redis
+        MinuteBarStream.rtb.redisAdd1Min(bar)
+        MinuteBarStream.ab.addSymbol(bar['S'])
+        # publish/subscribe
+        # MinuteBarStream.publisher.publish(bar)
+
         # print('bar: ', bar._raw)
         # publisher.publish(bar._raw)
 

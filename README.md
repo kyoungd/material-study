@@ -51,6 +51,10 @@ sudo docker run -p 6379:6379 -it --rm redislabs/redistimeseries
 redis-cli
 ```
 
+config get maxmemory
+config set maxmemory 100MB
+config get maxmemory
+
 ## REDIS-TIMESERIES local version
 
 $ redis-server --loadmodule /home/young/Desktop/code/RedisTimeSeries/bin/redistimeseries.so

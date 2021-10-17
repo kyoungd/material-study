@@ -202,6 +202,9 @@ class KeyName:
 
     STUDY_KEY_LEVELS = "STUDY_KEY_LEVELS"
 
+    # UPDATED BARS
+    VARIABLE_ACTIVE_BARS = "ACTIVE_BARS"    # active bar
+
     # Time Series Key for each symbol, data type and timeframe
 
     @staticmethod

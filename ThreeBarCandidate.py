@@ -1,7 +1,8 @@
 from redisUtil import RedisTimeFrame, KeyName, SetInterval
 from redisTSBars import RealTimeBars
-from redisHash import StoreStack
+from redisHash import StoreStack, ActiveBars
 from datetime import datetime
+from redisTSCreateTable import CreateRedisStockTimeSeriesKeys
 import time
 import sys
 
@@ -17,14 +18,14 @@ class StudyThreeBarsFilter:
     def _isFirstTwoBars(price0, price1, price2):
         if (price0 < 3) or (price0 > 20):
             return False
-        first = price1 - price2
-        if (first < StudyThreeBarsFilter._MinimumPriceJump):
+        first = price0 - price2
+        second = price1 - price2
+        if (abs(second) < StudyThreeBarsFilter._MinimumPriceJump):
             return False
-        second = price0 - price1
-        percentage = -second / first
-        if percentage < 0.4 or percentage > 0.6:
-            return False
-        return True
+        percentage = 0 if second == 0 else first / second
+        if percentage >= 0.3 and percentage < 0.7:
+            return True
+        return False
 
     @staticmethod
     def barCandidate(symbol, firstPrice, secondPrice, thirdPrice, timeframe):
@@ -60,6 +61,15 @@ class StudyThreeBarsCandidates:
             self.stack = stack
         self.rtb: RealTimeBars = RealTimeBars()
         self.store = []
+        self.ab = ActiveBars()
+
+    def getAllKeys(self):
+        symbols = []
+        symbols1 = self.ab.getAllSymbols().copy()
+        symbols2 = self.stack.getAllSymbols().copy()
+        symbols = set(symbols1 + symbols2)
+        self.ab.deleteAll(symbols)
+        return symbols
 
     def deleteScoreOfCandidate(self, redis, symbol):
         try:
@@ -79,18 +89,24 @@ class StudyThreeBarsCandidates:
         self.stack.getAll()
 
     def run(self, keys=None, getPriceData=None):
-        if (keys == None):
-            keys = self.rtb.all_keys()
-        if (getPriceData == None):
-            getPriceData = self.rtb.redis_get_data
-        for symbol in keys:
-            self._candidate(symbol, RedisTimeFrame.MIN5, getPriceData)
-            self._candidate(symbol, RedisTimeFrame.MIN2, getPriceData)
-        self.stack.openMark()
-        for stock in self.store:
-            self.stack.addSymbol(stock['symbol'], stock)
-        self.stack.closeMark()
-        print('done')
+        try:
+            if (keys == None):
+                keys = self.getAllKeys()
+                tables = CreateRedisStockTimeSeriesKeys()
+                tables.CreateRedisStockSymbol(keys)
+                # keys = self.rtb.all_keys()
+            if (getPriceData == None):
+                getPriceData = self.rtb.redis_get_data
+            for symbol in keys:
+                self._candidate(symbol, RedisTimeFrame.MIN5, getPriceData)
+                self._candidate(symbol, RedisTimeFrame.MIN2, getPriceData)
+            self.stack.openMark()
+            for stock in self.store:
+                self.stack.addSymbol(stock['symbol'], stock)
+            self.stack.closeMark()
+            print('done')
+        except Exception as e:
+            print('run: ' + e)
 
 
 def testGetPriceData(item, symbol, timeframe):
@@ -114,9 +130,10 @@ if __name__ == "__main__":
         app = StudyThreeBarsCandidates()
         app.run(keys, testGetPriceData)
     else:
+        print('StudyThreeBarsCandidates Begin')
         app = StudyThreeBarsCandidates()
         obj_now = datetime.now()
         secWait = 60 - obj_now.second
         time.sleep(secWait + 4)
         app.run()
-        SetInterval(60, app.run)
+        SetInterval(15, app.run)

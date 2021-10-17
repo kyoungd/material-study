@@ -101,11 +101,6 @@ def run():
     loop = asyncio.get_event_loop()
     time.sleep(5)  # give the initial connection time to be established
 
-    MinuteBarStream.init(conn)
-    MinuteBarStream.run()
-
-    time.sleep(5)  # give the initial connection time to be established
-
     # subs = ['AAPL', 'FB']
     # unsubs = []
     # data = {'subscribe': subs, 'unsubscribe': unsubs}
