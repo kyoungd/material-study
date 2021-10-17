@@ -19,7 +19,7 @@ class RealTimeBars:
     def __init__(self, rts=None):
         self.rts: Client = TimeSeriesAccess.connection(rts)
 
-    def redisRealtime(self, data):
+    def redisAddRealtime(self, data):
         timeframe = RedisTimeFrame.REALTIME
         ts = TimeStamp.now()
         symbol = data['symbol']
@@ -72,16 +72,16 @@ class RealTimeBars:
         return date_string
         # return "2021-02-10"
 
-    def _bar_adjustBar(self, prices, timeframe):
-        # get timestamp
-        ts = TimeStamp()
-        switcher = {
-            RedisTimeFrame.MIN1: 1,
-            RedisTimeFrame.MIN2: 2,
-            RedisTimeFrame.MIN5: 5,
-        }
-        mins = switcher.get(timeframe)
-        pass
+    # def _bar_adjustBar(self, prices, timeframe):
+    #     # get timestamp
+    #     ts = TimeStamp()
+    #     switcher = {
+    #         RedisTimeFrame.MIN1: 1,
+    #         RedisTimeFrame.MIN2: 2,
+    #         RedisTimeFrame.MIN5: 5,
+    #     }
+    #     mins = switcher.get(timeframe)
+    #     pass
 
     def _bar_realtime(self, rts, api, symbol, timeframe):
         try:

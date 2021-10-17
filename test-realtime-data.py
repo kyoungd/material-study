@@ -36,6 +36,10 @@ def create2MinBars(symbol):
     change = 0.50
     bars2Min.append(barData(open, close, high, low, 1000, symbol, change))
     bars2Min.append(barData(open, close, high, low, 1000, symbol, change))
+    # start 4 bar play
+    bars2Min.append(barData(open, close, high, low, 1000, symbol, change))
+    bars2Min.append(barData(open, close, high, low, 1000, symbol, change))
+    # end of 4 bar play
     change = 0.20
     bars2Min.append(barData(open, close, high, low, 1000, symbol, change))
     bars2Min.append(barData(open, close, high, low, 1000, symbol, change))
@@ -86,13 +90,13 @@ def getNext5MinBar(symbol):
 
 rtb: RealTimeBars = RealTimeBars()
 ab: ActiveBars = ActiveBars()
+process = StudyThreeBarsScore()
 
 
 def TradeBar(symbol: str):
-    process = StudyThreeBarsScore()
     data = {'symbol': symbol,
             'close': 10.45, 'volume': 100}
-    # print('TRADE: ', data)
+    print('TRADE: ', data)
     process.study(data)
 
 

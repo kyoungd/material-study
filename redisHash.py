@@ -115,8 +115,8 @@ class StoreScore (RedisHash):
     def __init__(self, symbol, r=None, key=None):
         if key is None:
             key = KeyName.KEY_THREEBARSCORE
-        super().__init__(self, key, r)
-        self.score: StudyScores = StudyScores(self.key, symbol)
+        super().__init__(key, r)
+        self.score: StudyScores = StudyScores(key, symbol)
 
     def save(self):
         # data = self.score.serialize_to_string()
@@ -148,25 +148,25 @@ class ActiveBars (RedisHash):
 
 
 if __name__ == "__main__":
-    app = ActiveBars()
-    app.addSymbol('AAPL')
-    app.addSymbol('GOOG')
-    app.addSymbol('MSFT')
-    app.addSymbol('FB')
-    app.addSymbol('AMZN')
-    symbols = app.getAllSymbols()
-    print(symbols)
-    app.deleteAll(symbols)
-    symbols = app.getAllSymbols()
-    print(symbols)
+    # app = ActiveBars()
+    # app.addSymbol('AAPL')
+    # app.addSymbol('GOOG')
+    # app.addSymbol('MSFT')
+    # app.addSymbol('FB')
+    # app.addSymbol('AMZN')
+    # symbols = app.getAllSymbols()
+    # print(symbols)
+    # app.deleteAll(symbols)
+    # symbols = app.getAllSymbols()
+    # print(symbols)
 
-    # app = StoreScore('test')
-    # app.score.Score = 50
-    # print(app.score)
-    # app.save()
-    # bpp = StoreScore('test')
-    # bpp.load()
-    # print(bpp.score)
+    app = StoreScore('test')
+    app.score.Score = 50
+    print(app.score)
+    app.save()
+    bpp = StoreScore('test')
+    bpp.load()
+    print(bpp.score)
     #
     #
     # app = StoreStack()
