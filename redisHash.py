@@ -103,6 +103,9 @@ class StoreStack(RedisHash):
             self.unsubscribes[key.decode()] = ''
         self.subscribes = {}
 
+    # subscribe - list of subscribe symbols
+    # unsubscribe - list of unsubscribe symbols
+    # store - list of subscribe symbols
     def addSymbol(self, symbol, jsondata):
         if (not self.isSymbolExist(symbol)):
             self.subscribes[symbol] = symbol
@@ -113,6 +116,10 @@ class StoreStack(RedisHash):
     def getList(dict):
         return list(map(itemgetter(0), dict.items()))
 
+    # This is called at the end of the Stack calculation.
+    # update subscribe, unsubscribe and store list.
+    # publish the subscribe/unsubscribe list to redis.
+    #
     def closeMark(self):
         subs = [*self.subscribes.keys()]
         print('SUBS:')
@@ -134,6 +141,9 @@ class StoreStack(RedisHash):
         print(oneDict)
 
 
+# This class encapsulates the Study Scores function.
+# It encapsulates redis hash key Score.
+#
 class StoreScore (RedisHash):
     def __init__(self, symbol, r=None, key=None):
         if key is None:
@@ -150,7 +160,8 @@ class StoreScore (RedisHash):
         data = self.value(self.score.Symbol)
         self.score.deserialize_from_string(data)
 
-
+# This is the Active Bar.  This is the list of one minute stock bar that was updated recently.
+# We are only interested in symbols in this list as we only focus on moving stock.
 class ActiveBars (RedisHash):
 
     def __init__(self, r=None):
