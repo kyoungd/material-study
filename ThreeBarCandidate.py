@@ -7,12 +7,23 @@ import time
 import sys
 
 
+# StudyThreeBarsFilter
+
 class StudyThreeBarsFilter:
     _MinimumPriceJump = 0.2
 
+    #
+    # return a column in a array matrix
+    #
     @staticmethod
     def _column(matrix, i):
         return [row[i] for row in matrix]
+
+    # In 3 bar play, it looks for a pattern like this.
+    # price = [2, 4, 3].  There is a sharp rise of price from 2 to 4.
+    # and it follows a drop to 3 (or 50% retrace).  This pattern may happen
+    # across 3 or 4 bars.  We are looking for that pattern between 3 prices passed in.
+    #
 
     @staticmethod
     def _isFirstTwoBars(price0, price1, price2):
@@ -27,6 +38,7 @@ class StudyThreeBarsFilter:
             return True
         return False
 
+    # This is the data format for the Stack.
     @staticmethod
     def barCandidate(symbol, firstPrice, secondPrice, thirdPrice, timeframe):
         return {'symbol': symbol, 'value': {
@@ -36,6 +48,7 @@ class StudyThreeBarsFilter:
             'timeFrame': timeframe
         }}
 
+    # It looks for 3 bar patterns on 3 or 4 bars.
     @staticmethod
     def potentialList(symbol, prices, timeframe):
         if len(prices) > 2 and StudyThreeBarsFilter._isFirstTwoBars(prices[0][1], prices[1][1], prices[2][1]):
@@ -52,24 +65,43 @@ class StudyThreeBarsFilter:
         #     }}
 
 
+#
+# This class filters the Acitve Bars (stocks that are moving)
+# and filter out the stocks that meets the 3 bar criteria.
+# It is saved to a redis hash table.  It is named STUDYTHREEBARSTACK
+# or just stack.
+# It also manages subscribe/unsubscribe table for Alpaca Stream.
+# We subscribe/unsubscribe to real time data stream for the
+# real-time live data.  We subscribe to the trade stream of the
+# stocks taht are in the Stack
+#
 class StudyThreeBarsCandidates:
 
     def __init__(self, stack: StoreStack = None):
+        # StoreStack: class to access the redis Stack.
         if (stack == None):
             self.stack = StoreStack()
         else:
             self.stack = stack
+        # rtb: RealTimeBars.  access to the redis real time data (timeseries).
         self.rtb: RealTimeBars = RealTimeBars()
+        # store: A temporary list to hold Stack candidates.
         self.store = []
+        # ab: ActiveBars.  List of stocks that has its 1 minute data updated.
         self.ab = ActiveBars()
 
+    # get all potential 3 bar candidates and return a merged list.
     def getAllKeys(self):
         symbols = []
         symbols1 = self.ab.getAllSymbols().copy()
         symbols2 = self.stack.getAllSymbols().copy()
         symbols = set(symbols1 + symbols2)
+        # the ActiveBars is deleted once they are processed.
         self.ab.deleteAll(symbols)
         return symbols
+
+    # remove a symbol from the Stack.
+    # this happens when a stock price no longer matches the 3 bar pattern.
 
     def deleteScoreOfCandidate(self, redis, symbol):
         try:
@@ -77,6 +109,9 @@ class StudyThreeBarsCandidates:
         except Exception as e:
             print(e)
 
+    # Looking at a stock, and see if it matches the 3 bar pattern.
+    # the result is saved in the class store, and process to
+    # Stack, subscribe and unsubscribe table.
     def _candidate(self, symbol, timeframe, getPriceData):
         prices = getPriceData(None, symbol, timeframe)
         addData, data = StudyThreeBarsFilter.potentialList(
@@ -85,21 +120,26 @@ class StudyThreeBarsCandidates:
             # package = json.dumps(data)
             self.store.append(data)
 
+    # return all symbols stored in the Stack (not used)
     def getStacks(self):
         self.stack.getAll()
 
     def run(self, keys=None, getPriceData=None):
         try:
+            # get all active symbols from the ActiveBars and Stack.
             if (keys == None):
                 keys = self.getAllKeys()
                 tables = CreateRedisStockTimeSeriesKeys()
                 tables.CreateRedisStockSymbol(keys)
                 # keys = self.rtb.all_keys()
+            # default method to get the price data.
             if (getPriceData == None):
                 getPriceData = self.rtb.redis_get_data
+            # for each active symbol, check and see if they match the 3 bar pattern.
             for symbol in keys:
                 self._candidate(symbol, RedisTimeFrame.MIN5, getPriceData)
                 self._candidate(symbol, RedisTimeFrame.MIN2, getPriceData)
+            # add the symbol candidates to Stack and subscribe/unsubscribe to the trade stream.
             self.stack.openMark()
             for stock in self.store:
                 self.stack.addSymbol(stock['symbol'], stock)

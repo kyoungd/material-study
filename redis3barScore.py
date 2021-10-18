@@ -3,15 +3,24 @@ from redisTSBars import RealTimeBars
 from redisHash import StoreStack, StoreScore
 from redisUtil import RedisTimeFrame
 
+#
+# This class perform three bar study on trade data.
+#
+
 
 class StudyThreeBarsScore:
+    # stack: StoreStack: class to store and retrieve Stack data
+    # rtb: RealTimeBars: class to retrieve real time data
+
     def __init__(self):
         self.stack = StoreStack()
         self.rtb = RealTimeBars()
 
+    # two scoring.  This one tests for basic accpetable trade.
     def _isPriceRangeOptimal(self, newPrice, price1, price2):
         return (newPrice < price2 and newPrice > price1)
 
+    # two scoring.  This one tests for optimal trade pattern.
     def _isPriceRangeUsable(self, newPrice, price1, price2):
         priceChange = price2 - price1
         priceTop = price2 + (priceChange / 2)
@@ -19,6 +28,12 @@ class StudyThreeBarsScore:
             return True
         return False
 
+    #
+    # score an individual stock pricing.
+    # 4 point is given for optimal trade.
+    # 2 point is given for acceptable trade.
+    # 0 point is given for unacceptable trade.
+    #
     def _thirdBarPlay(self, newPrice, realtime, stack):
         point = 0
         stackValue = stack['value']
@@ -30,6 +45,11 @@ class StudyThreeBarsScore:
             point = 2
         return point
 
+    # get real time data.
+    # get pricing data.
+    # get stack data which includes the last two prices that meets three bar pattern
+    # score the pricing data and save it into Score class.
+    #
     def _process(self, package, getRealTimeData, getStackData):
         data = package
         symbol = data['symbol']
@@ -42,6 +62,9 @@ class StudyThreeBarsScore:
             study.score.Score = self._thirdBarPlay(newPrice, realtime, stack)
             study.save()
 
+    #
+    # call the scoring method
+    #
     def study(self, package, getRealTimeData=None, getStackData=None):
         if (getRealTimeData == None):
             getRealTimeData = self.rtb.redis_get_data
@@ -49,6 +72,7 @@ class StudyThreeBarsScore:
             getStackData = self.stack.value
         self._process(package, getRealTimeData, getStackData)
 
+    # print data for debugging
     def printAllScores(self, score):
         data = self.score.getAll()
         print(data)

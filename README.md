@@ -1,3 +1,26 @@
+# VOCABURARY
+
+MINUTE BAR - Real time 1 minute streaming data from Alpaca. It only sends data that has changed.
+ACTIVE BAR - List of stocks that were changed.
+REALTIME TRADE DATA. Real time trade data. We have to subscribe/unsubscribe per individual stock.
+REALTIME 1 MIN BAR. One minute data stream from alpaca. Subscirbe once for all stocks.
+REALTIME 2 MIN BAR. Use the redis timeseries automatic aggregation. Use 1 Min.
+REALTIME 5 MIN BAR. Use the redis timeseries automatic aggregation. Use 1 Min.
+SUBSCRIBE - Hash table. Real-Time trade data subscription list. List of company symbols.
+UMSUBSCRIBE - Hash table. Real-Time trade data unsubscribe list. List of company symbols.
+STACK - Hash. It keeps a list of companies (symbols) that has price moment that meets the
+initial condition of the three bar play.
+SCORE - Hash. This keeps a list of companies that are being actively scored by the system.
+It has to be in the "Stack" before it can appear on the Score.
+
+# KEY FEATURES
+
+MinuteBarStream.MinuteBarStream() - class
+This module handles the real-time 1 minute bar, and live real-time trade of selected stocks.  
+It also creates redis timeseries tables for stock data.
+
+ThreeBarCandidates.StudyThreeBarsCandidates() - class
+
 # Data Model for Stock Prices and Technical Indicators (using RedisTimeSeries)
 
 This repository demonstrate a sample code for using RedisTimeSeries to store, aggregate/query stock prices, technical indicators and time-series data sets used by investors. These sets of scripts create various timeseries for prices and indicators. It shows how to create aggregations on top of the raw time series, and demonstrate how easily bulk time series can be ingested and queried using various RedisTimeSeries commands.

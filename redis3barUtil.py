@@ -1,4 +1,6 @@
-
+# this is study utility, but it is not neccessary.
+# remove this file
+#
 class StudyThreeBarsUtil:
 
     @staticmethod

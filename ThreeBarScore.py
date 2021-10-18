@@ -30,6 +30,12 @@ from redisTSCreateTable import CreateRedisStockTimeSeriesKeys
 # c - array < string >, trade condition
 # z - string, tape
 
+#
+# conn: Alpaca data stream - subscribe/unsubscribe to Alpaca.  Also get the real-time trade data.
+# process: StudyThreeBarsScore - This scores each stock with the three bar studies.
+# subscriber: RedisSubscriber - This subscribes/unsubscribes to the Alpaca real-time trade data.
+#
+
 
 def init():
     try:
@@ -39,6 +45,7 @@ def init():
     except RuntimeError:
         asyncio.set_event_loop(asyncio.new_event_loop())
 
+    # Alpaca real time stream data access
     global conn
     conn = AlpacaStreamAccess.connection()
     # conn.run()
@@ -51,7 +58,9 @@ def init():
 
 
 # PUBLISH RPS_THREEBARSTACK_NEW "{ 'data': { 'subscribe' : '[AAPL, GOOG]', 'unsubscribe': '[]' }}"
-
+# Handle real time trade data.  Process the pricing data with three bar studies.
+# It scores the stock with the three bar studies.
+#
 async def _handleTrade(trade):
     # try:
     #     # make sure we have an event loop, if not create a new one
@@ -65,6 +74,10 @@ async def _handleTrade(trade):
     process.study(data)
 
 
+#
+# The system dynamically subscribe/unsubscribe to the real time trade stream
+# based on which symbol has meet the three bar pattern.
+#
 def candidateEvent(data):
     print(data)
     if (conn == None):
@@ -75,6 +88,7 @@ def candidateEvent(data):
         loop.set_debug(True)
     except RuntimeError:
         asyncio.set_event_loop(asyncio.new_event_loop())
+    # subscribe to Alpaca Trade data Stream
     if ('subscribe' in data and len(data['subscribe']) > 0):
         for symbol in data['subscribe']:
             try:
@@ -83,6 +97,7 @@ def candidateEvent(data):
             except Exception as e:
                 print('subscribe failed: ', symbol)
                 print(e)
+    # unsubscribe from Alpaca Trade data Stream
     if ('unsubscribe' in data and len(data['unsubscribe']) > 0):
         for symbol in data['unsubscribe']:
             try:
@@ -91,6 +106,11 @@ def candidateEvent(data):
             except Exception as e:
                 print('unsubscribe failed: ', symbol)
                 print(e)
+
+#
+# The system dynamically subscribe/unsubscribe to the real time alpaca trade stream
+# it also handles trade data and scores the three bar study.
+#
 
 
 def run():

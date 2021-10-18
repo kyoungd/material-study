@@ -6,23 +6,33 @@ from redisUtil import KeyName, RedisAccess, StudyScores
 from operator import itemgetter
 
 
+# Redis hash key name.
+# this class encapsuates the redis hash operations.
+#
 class RedisHash:
 
-    def __init__(self, key, r=None, callback=None):
+    def __init__(self, key: str, r=None, callback=None):
         self.redis = RedisAccess.connection(r)
         self.callback = callback
         self.key = key
 
+    # return Hash Key
     @property
     def get_key(self):
         return self.key
 
+    # return all hash fields/values for the given key
     def _getAll(self, key):
         return self.redis.hgetall(key)
 
+    # clean up _getAll()
     def getAll(self):
         return self._getAll(self.key)
 
+    # return all fields for the key
+    # redis returns array of byte array.
+    # encode it to standard string.
+    #
     def getAllSymbols(self):
         arrayOfByteArray = self.redis.hkeys(self.key)
         result = []
@@ -30,17 +40,22 @@ class RedisHash:
             result.append(item.decode('utf-8'))
         return result
 
+    # add a new field/value pair to the hash
     def _add(self, key, symbol, jsondata):
         data = json.dumps(jsondata)
         self.redis.hset(key, symbol, data)
         if (self.callback != None):
             self.callback(symbol, jsondata)
 
+    # clean up _add()
     def add(self, symbol, jsondata):
         return self._add(self.key, symbol, jsondata)
 
+    # delete a field/value pair from the hash key
     def delete(self, symbol):
         self.redis.hdel(self.key, symbol)
+
+    # return value from redish hash key field
 
     def _value(self, key, symbol):
         data = self.redis.hget(key, symbol)
@@ -48,13 +63,18 @@ class RedisHash:
             return None
         return json.loads(data)
 
+    # clean up _value()
     def value(self, symbol):
         return self._value(self.key, symbol)
 
+    # does a field exists in the hash key
     def isSymbolExist(self, symbol):
         return self.redis.hexists(self.key, symbol)
 
 
+# This class encapsulates the Stack Store function.
+# It also handles subscribe/unsubscribe to alpaca stream list.
+# When a list of subscribe/unsubscribe is created, it published it to redis.
 class StoreStack(RedisHash):
     def __init__(self, r=None, unsubCallback=None, key=None):
         if key is None:
@@ -74,6 +94,9 @@ class StoreStack(RedisHash):
     def get_unsubscribes(self):
         return self.unsubscribes
 
+    # it intializes subscribe/unbsubscribe list
+    # it copies all symbols from stack to unsubscribe list.
+    # If the same symbol is added to the subscribe list, it will be removed from the unsubscribe list.
     def openMark(self):
         oneDict = self.getAll()
         for key in oneDict:
